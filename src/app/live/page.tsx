@@ -1853,11 +1853,19 @@ function LivePageClient() {
 
       const proxyM3u8Url = `/api/proxy/m3u8?url=${encodedVideoUrl}&decotv-source=${sourceKey}`;
       const proxyStreamUrl = `/api/proxy/stream?url=${encodedVideoUrl}&decotv-source=${sourceKey}`;
-      const targetUrl = isDirectConnect
-        ? videoUrl
-        : type === 'm3u8'
-          ? proxyM3u8Url
-          : proxyStreamUrl;
+
+      // 当网页运行在 HTTPS 协议下，如果直播流是 HTTP 明文，浏览器会强制拦截 Mixed Content，此时必须走代理保证正常播放
+      const isMixedContent =
+        typeof window !== 'undefined' &&
+        window.location.protocol === 'https:' &&
+        videoUrl.toLowerCase().startsWith('http://');
+
+      const targetUrl =
+        isDirectConnect && !isMixedContent
+          ? videoUrl
+          : type === 'm3u8'
+            ? proxyM3u8Url
+            : proxyStreamUrl;
 
       try {
         // 创建新的播放器实例

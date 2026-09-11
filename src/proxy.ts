@@ -242,6 +242,16 @@ function handleAuthFailure(
 
 // 判断是否需要跳过认证的路径
 function shouldSkipAuth(pathname: string): boolean {
+  // 静态直播源文件、直播代理、播放代理及 TVBox 协议跳过认证，保证播放器和外部客户端可直接拉取
+  if (
+    pathname.startsWith('/live/') ||
+    pathname.startsWith('/api/proxy/') ||
+    pathname.startsWith('/api/live/') ||
+    pathname.startsWith('/api/tvbox/')
+  ) {
+    return true;
+  }
+
   const skipPaths = [
     '/_next',
     '/favicon.ico',
@@ -250,13 +260,6 @@ function shouldSkipAuth(pathname: string): boolean {
     '/icons/',
     '/logo.png',
     '/screenshot.png',
-    '/api/tvbox/config',
-    '/api/tvbox/diagnose',
-    '/api/tvbox/douban',
-    '/api/tvbox/search',
-    '/api/proxy/spider.jar',
-    '/api/proxy/m3u8-filter',
-    '/api/proxy/m3u8-asset',
     '/register', // 允许访问注册页面
   ];
 

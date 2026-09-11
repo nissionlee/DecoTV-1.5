@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
@@ -62,13 +65,29 @@ export async function refreshLiveChannels(liveInfo: {
   if (cachedLiveChannels[liveInfo.key]) {
     delete cachedLiveChannels[liveInfo.key];
   }
-  const ua = liveInfo.ua || defaultUA;
-  const response = await fetch(liveInfo.url, {
-    headers: {
-      'User-Agent': ua,
-    },
-  });
-  const data = await response.text();
+  let data = '';
+  // 检查是否为本地 public/live/ 下的静态 m3u 文件，支持直接读取磁盘，避免回环网络请求失败
+  const localMatch = liveInfo.url.match(/\/live\/([^?#]+\.m3u)/i);
+  if (localMatch) {
+    try {
+      const filePath = path.join(process.cwd(), 'public', 'live', localMatch[1]);
+      if (fs.existsSync(filePath)) {
+        data = fs.readFileSync(filePath, 'utf-8');
+      }
+    } catch {
+      // 降级使用网络请求
+    }
+  }
+
+  if (!data) {
+    const ua = liveInfo.ua || defaultUA;
+    const response = await fetch(liveInfo.url, {
+      headers: {
+        'User-Agent': ua,
+      },
+    });
+    data = await response.text();
+  }
   const result = parseM3U(liveInfo.key, data);
   const epgUrl = liveInfo.epg || result.tvgUrl;
   const epgs = await parseEpg(
