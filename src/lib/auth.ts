@@ -29,26 +29,73 @@ export function getAuthSecret(): string | null {
   return secret;
 }
 
-// 从cookie获取认证信息 (服务端使用)
+// 从 cookie 或 Authorization 头部获取认证信息 (服务端使用)
 export function getAuthInfoFromCookie(request: NextRequest): {
   password?: string;
   username?: string;
   signature?: string;
   timestamp?: number;
 } | null {
+  // 1. 优先从 cookie 获取
   const authCookie = request.cookies.get('auth');
-
-  if (!authCookie) {
-    return null;
+  if (authCookie) {
+    try {
+      let decoded = decodeURIComponent(authCookie.value);
+      if (decoded.includes('%')) {
+        decoded = decodeURIComponent(decoded);
+      }
+      return JSON.parse(decoded);
+    } catch {
+      // 忽略解析错误，尝试后续鉴权方式
+    }
   }
 
-  try {
-    const decoded = decodeURIComponent(authCookie.value);
-    const authData = JSON.parse(decoded);
-    return authData;
-  } catch {
-    return null;
+  // 2. 尝试从 Authorization: Bearer <token> 获取 (兼容原生 TV/移动客户端)
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+    try {
+      const raw = authHeader.slice(7).trim();
+      let decoded = decodeURIComponent(raw);
+      if (decoded.includes('%')) {
+        decoded = decodeURIComponent(decoded);
+      }
+      return JSON.parse(decoded);
+    } catch {
+      // 忽略
+    }
   }
+
+  // 3. 尝试从 x-token 请求头获取
+  const xToken = request.headers.get('x-token');
+  if (xToken) {
+    try {
+      let decoded = decodeURIComponent(xToken.trim());
+      if (decoded.includes('%')) {
+        decoded = decodeURIComponent(decoded);
+      }
+      return JSON.parse(decoded);
+    } catch {
+      // 忽略
+    }
+  }
+
+  // 4. 尝试从 URL 查询参数获取 (?auth=... 或 ?token=...)
+  const queryToken =
+    request.nextUrl?.searchParams?.get('token') ||
+    request.nextUrl?.searchParams?.get('auth');
+  if (queryToken) {
+    try {
+      let decoded = decodeURIComponent(queryToken.trim());
+      if (decoded.includes('%')) {
+        decoded = decodeURIComponent(decoded);
+      }
+      return JSON.parse(decoded);
+    } catch {
+      // 忽略
+    }
+  }
+
+  return null;
 }
 
 // 从cookie获取认证信息 (客户端使用)

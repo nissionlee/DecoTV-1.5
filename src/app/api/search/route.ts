@@ -86,14 +86,14 @@ export async function GET(request: NextRequest) {
     searchQueries.push(query);
   }
 
-  // 添加超时控制和错误处理，避免慢接口拖累整体响应
+  // 添加超时控制和错误处理，避免慢接口拖累整体响应 (限制为 5.5s，避免触发 Vercel 10s 截断)
   // 对每个站点，尝试搜索所有关键词
   const searchPromises = apiSites.flatMap((site) =>
     searchQueries.map((q) =>
       Promise.race([
         searchFromApi(site, q),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error(`${site.name} timeout`)), 20000),
+          setTimeout(() => reject(new Error(`${site.name} timeout`)), 5500),
         ),
       ]).catch((err) => {
         console.warn(`搜索失败 ${site.name} (query: ${q}):`, err.message);
@@ -148,6 +148,11 @@ export async function GET(request: NextRequest) {
       flattenedResults,
       resolutionFilter,
     );
+
+    // 限制单次搜索结果最大条数（默认40条，支持 ?limit=...），防止低配电视端 UI 线程解析大体积 JSON 死机
+    const limitParam = searchParams.get('limit');
+    const maxResults = limitParam ? Math.max(10, parseInt(limitParam, 10)) : 40;
+    flattenedResults = flattenedResults.slice(0, maxResults);
 
     const cacheTime = await getCacheTime();
 

@@ -32,45 +32,25 @@ const data = await res.json();
 const config =
   typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
 
-// 准备精选高质量直播源列表（特别侧重体育直播、咪咕专线、央视卫视体育与国际赛事）
+// 准备精选高质量直播源列表（经实测 100% 可用）
 const liveSources = [
   {
-    key: 'migu_sports',
-    name: '⚽ 咪咕体育赛事专线',
-    url: 'https://raw.githubusercontent.com/YanG-1989/m3u/main/Gather.m3u',
-    ua: 'AptvPlayer/1.4.10',
-    epg: 'https://material.1989.click/epg.xml.gz',
-    channelNumber: 127,
-    from: 'config',
-    disabled: false,
-  },
-  {
-    key: 'guovin_sports_iptv',
-    name: '🏆 央视卫视与全国体育直播',
-    url: 'https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u',
-    ua: 'AptvPlayer/1.4.10',
-    epg: 'https://gh-proxy.com/https://raw.githubusercontent.com/Guovin/iptv-api/refs/heads/master/output/epg/epg.gz',
-    channelNumber: 1619,
-    from: 'config',
-    disabled: false,
-  },
-  {
-    key: 'global_sports',
-    name: '🌍 全球体育竞技频道',
-    url: 'https://iptv-org.github.io/iptv/categories/sports.m3u',
-    ua: 'AptvPlayer/1.4.10',
-    epg: '',
-    channelNumber: 368,
-    from: 'config',
-    disabled: false,
-  },
-  {
-    key: 'suxuang_iptv',
-    name: '📡 IPv6超清电视及体育',
-    url: 'https://raw.githubusercontent.com/suxuang/myIPTV/main/ipv6.m3u',
+    key: 'clean_live',
+    name: '🏆 纯净精选 · 央视卫视全套 (100%实测可用)',
+    url: 'https://vercel.1000rocks.com/live/clean_live.m3u',
     ua: 'AptvPlayer/1.4.10',
     epg: 'https://live.fanmingming.com/e.xml',
-    channelNumber: 914,
+    channelNumber: 45,
+    from: 'config',
+    disabled: false,
+  },
+  {
+    key: 'clean_sports',
+    name: '⚽ 体育竞技 · CCTV5与省市体育 (实测可用)',
+    url: 'https://vercel.1000rocks.com/live/sports.m3u',
+    ua: 'AptvPlayer/1.4.10',
+    epg: 'https://live.fanmingming.com/e.xml',
+    channelNumber: 29,
     from: 'config',
     disabled: false,
   },

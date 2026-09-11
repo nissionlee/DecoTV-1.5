@@ -131,14 +131,14 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // 验证成功，设置认证cookie
-      const response = NextResponse.json({ ok: true });
+      // 验证成功，设置认证cookie并返回 token
       const cookieValue = await generateAuthCookie(
         undefined,
         password,
         'owner',
         true,
       ); // localstorage 模式包含 password
+      const response = NextResponse.json({ ok: true, token: cookieValue });
       const expires = getAuthCookieExpires();
 
       response.cookies.set(
@@ -165,14 +165,14 @@ export async function POST(req: NextRequest) {
       username === process.env.USERNAME &&
       password === process.env.PASSWORD
     ) {
-      // 验证成功，设置认证cookie
-      const response = NextResponse.json({ ok: true });
+      // 验证成功，设置认证cookie并返回 token
       const cookieValue = await generateAuthCookie(
         username,
         password,
         'owner',
         false,
       ); // 数据库模式不包含 password
+      const response = NextResponse.json({ ok: true, token: cookieValue });
       const expires = getAuthCookieExpires();
 
       response.cookies.set(
@@ -202,14 +202,14 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // 验证成功，设置认证cookie
-      const response = NextResponse.json({ ok: true });
+      // 验证成功，设置认证cookie并返回 token
       const cookieValue = await generateAuthCookie(
         username,
         password,
         user?.role || 'user',
         false,
       ); // 数据库模式不包含 password
+      const response = NextResponse.json({ ok: true, token: cookieValue });
       const expires = getAuthCookieExpires();
 
       response.cookies.set(
