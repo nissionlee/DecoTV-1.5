@@ -1,0 +1,55 @@
+name: Upstream Sync
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # 每天 UTC 00:00 (北京时间 08:00) 自动同步
+  workflow_dispatch: # 支持在 GitHub Actions 页面手动点击运行
+
+jobs:
+  sync_latest_from_upstream:
+    name: Sync latest from Decohererk/DecoTV
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/Decohererk/DecoTV.git
+          git fetch upstream main --tags
+
+      - name: Check for updates
+        id: check_updates
+        run: |
+          LOCAL_COMMIT=$(git rev-parse HEAD)
+          UPSTREAM_COMMIT=$(git rev-parse upstream/main)
+          echo "Local commit:    $LOCAL_COMMIT"
+          echo "Upstream commit: $UPSTREAM_COMMIT"
+          if [ "$LOCAL_COMMIT" = "$UPSTREAM_COMMIT" ]; then
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+            echo "Already up to date with upstream."
+          else
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+            echo "New updates found from upstream."
+          fi
+
+      - name: Merge upstream changes
+        if: steps.check_updates.outputs.has_updates == 'true'
+        run: |
+          git checkout main
+          git merge upstream/main -m "chore(sync): sync upstream updates from Decohererk/DecoTV"
+
+      - name: Push changes to fork
+        if: steps.check_updates.outputs.has_updates == 'true'
+        run: |
+          git push origin main --tags
