@@ -721,7 +721,7 @@ export async function getAvailableApiSites(user?: string): Promise<ApiSite[]> {
   // 优先根据用户自己的 enabledApis 配置查找
   if (userConfig.enabledApis && userConfig.enabledApis.length > 0) {
     const userApiSitesSet = new Set(userConfig.enabledApis);
-    return allApiSites
+    const sites = allApiSites
       .filter((s) => userApiSitesSet.has(s.key))
       .map((s) => ({
         key: s.key,
@@ -731,9 +731,12 @@ export async function getAvailableApiSites(user?: string): Promise<ApiSite[]> {
         is_adult: s.is_adult,
         disable_ad_filter: s.disable_ad_filter,
       }));
+    if (sites.length > 0) {
+      return sites;
+    }
   }
 
-  // 如果没有 enabledApis 配置，则根据 tags 查找
+  // 如果没有有效 enabledApis 配置，则根据 tags 查找
   if (userConfig.tags && userConfig.tags.length > 0 && config.UserConfig.Tags) {
     const enabledApisFromTags = new Set<string>();
 
@@ -748,7 +751,7 @@ export async function getAvailableApiSites(user?: string): Promise<ApiSite[]> {
     });
 
     if (enabledApisFromTags.size > 0) {
-      return allApiSites
+      const sites = allApiSites
         .filter((s) => enabledApisFromTags.has(s.key))
         .map((s) => ({
           key: s.key,
@@ -758,10 +761,13 @@ export async function getAvailableApiSites(user?: string): Promise<ApiSite[]> {
           is_adult: s.is_adult,
           disable_ad_filter: s.disable_ad_filter,
         }));
+      if (sites.length > 0) {
+        return sites;
+      }
     }
   }
 
-  // 如果都没有配置，返回所有可用的 API 站点
+  // 如果都没有配置或配置的源全部失效，返回所有可用的 API 站点
   return allApiSites;
 }
 
