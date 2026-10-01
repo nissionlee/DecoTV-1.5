@@ -16,6 +16,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          token: ${{ secrets.PAT_TOKEN || secrets.SYNC_TOKEN || github.token }}
           fetch-depth: 0
 
       - name: Configure Git
@@ -25,22 +26,20 @@ jobs:
 
       - name: Fetch upstream
         run: |
-          git remote add upstream https://github.com/Decohererk/DecoTV.git
-          git fetch upstream main --tags
+          git remote add upstream https://github.com/Decohererk/DecoTV.git || true
+          git fetch upstream main
 
       - name: Check for updates
         id: check_updates
         run: |
-          LOCAL_COMMIT=$(git rev-parse HEAD)
-          UPSTREAM_COMMIT=$(git rev-parse upstream/main)
-          echo "Local commit:    $LOCAL_COMMIT"
-          echo "Upstream commit: $UPSTREAM_COMMIT"
-          if [ "$LOCAL_COMMIT" = "$UPSTREAM_COMMIT" ]; then
+          BEHIND_COUNT=$(git rev-list --count HEAD..upstream/main)
+          echo "Commits behind upstream: $BEHIND_COUNT"
+          if [ "$BEHIND_COUNT" -eq 0 ]; then
             echo "has_updates=false" >> $GITHUB_OUTPUT
             echo "Already up to date with upstream."
           else
             echo "has_updates=true" >> $GITHUB_OUTPUT
-            echo "New updates found from upstream."
+            echo "Found $BEHIND_COUNT new commit(s) from upstream."
           fi
 
       - name: Merge upstream changes
@@ -52,4 +51,4 @@ jobs:
       - name: Push changes to fork
         if: steps.check_updates.outputs.has_updates == 'true'
         run: |
-          git push origin main --tags
+          git push origin main
